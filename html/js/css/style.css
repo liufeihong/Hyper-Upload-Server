@@ -1,0 +1,379 @@
+html,body{
+    height:100%;
+}
+
+body {
+  font-family: "Microsoft Yahei", Helvetica, Arial, sans-serif !important;
+}
+
+body, h1, h2, h3, h4, h5, h6, p, ul, dl, dt, dd, form, fieldset {
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: #2C629E;
+    text-decoration: none;
+}
+
+.header {
+    background: #353536;
+    margin: 0 0 0px;
+    padding: 0 20px;
+    height: 50px;
+}
+
+
+.container {
+    margin-top: 20px;
+}
+
+
+.tabs_header {
+    margin-bottom: 15px;
+    height: 29px;
+    clear: both;
+    overflow: hidden;
+    overflow: visible;
+}
+
+.nav-tabs {
+    margin-bottom: 20px;
+    margin-left: 0;
+    list-style: none;
+    
+    border-bottom: 1px solid #ddd;
+    padding-left: 10px;
+    height:33px;
+    
+}
+
+.nav-tabs:before , .nav-tabs:after {
+    display: table;
+    line-height: 0;
+    content: "";
+}
+
+.nav-tabs:after {
+    clear: both;
+}
+
+.nav-tabs li {
+    line-height: 20px;
+    list-style: none;
+    float: left;
+    margin-bottom: -1px;
+}
+
+.tabs_header  .tabs li.active {
+    
+}
+
+.nav-tabs>li>a {
+    display: block;
+    text-decoration: none;
+}
+
+.nav-tabs>li>a, .nav-pills>li>a {
+    padding-right: 12px;
+    padding-left: 12px;
+    margin-right: 2px;
+    line-height: 14px;
+}
+
+.nav-tabs>li>a {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    line-height: 20px;
+    border: 1px solid transparent;
+    -webkit-border-radius: 4px 4px 0 0;
+    -moz-border-radius: 4px 4px 0 0;
+    border-radius: 4px 4px 0 0;
+}
+
+.nav-tabs>li>a {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.nav-tabs>.active>a, .nav-tabs>.active>a:hover, .nav-tabs>.active>a:focus {
+    color: #555;
+    cursor: default;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+    text-decoration: none;
+}
+
+.tabbody {
+    min-height: 600px;
+    padding:10px 30px;
+}
+
+.tabbody>DIV {
+    min-height: 200px;
+    border:1px solid #ccc;
+}
+
+.footer {
+    height: 50px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-top: 1px solid #bbb;    
+}
+
+.form {
+    padding: 4px 20px;
+}
+.form-row {
+    line-height: 30px;
+    min-height: 30px;
+    border-bottom: 1px solid #ccc;
+    padding: 6px 10px;
+    overflow: auto;
+}
+
+.form-row.last-row {
+    border-bottom: 0;
+}
+
+.form-row .title {
+    float:left;
+    width:200px;
+}
+
+.form-row input[type=text] {
+    border: 1px solid #bbb;
+    padding: 3px 4px;
+    height: 22px;
+    line-height: 22px;
+    min-width: 260px;
+    /* border-radius: 5px; */
+    margin-bottom: 0;
+}
+
+input[type=text] {
+  border-radius: 4px;
+}
+
+input[type=file] {
+    display: block;
+}
+
+.fileinput-button {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.fileinput-button input {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    opacity: 0;
+    -ms-filter: 'alpha(opacity=0)';
+    font-size: 200px !important;
+    direction: ltr;
+    cursor: pointer;
+}
+
+.progress {
+    height: 20px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+}
+
+.file-wrap{
+  float: left;
+  height: 28px;
+  background: #fafafa;
+  width: 260px;
+  position: relative;
+  border: 1px solid #bdbcbd;
+  border-radius: 3px;
+  margin-right: 6px;
+  overflow : hidden;
+  padding-left:3px;
+  padding-right:3px;
+  font-size:13px;
+}
+
+.file-browser{
+  text-align: center;
+  font-size: 14px;
+  height: 22px;
+  line-height: 22px;
+  border:0px;
+  margin-left: 4px;
+  margin-right: 4px;
+  overflow: hidden;
+  padding: 3px 0;
+}
+
+.file-wrap  input {
+    position: absolute;
+    font-size: 100px;
+    right: 0;
+    top: 0;
+    filter:alpha(opacity=0);
+    -moz-opacity:0;
+    opacity:0;
+    cursor: pointer
+}
+
+.file-wrap:hover {
+    color: #444;
+    background: #eee;
+    border-color: #ccc;
+    text-decoration: none
+}
+
+.fileInput{ position: absolute;
+left: 0;top: 0;height: 30px; 
+filter:alpha(opacity=60);
+opacity:0.6; 
+background-color: transparent;
+}
+
+.uploadbtn {
+  cursor:pointer;
+  min-width:60px;
+  float:left;
+}
+
+.progressbar {
+   position:relative;
+   margin-left:0;
+   margin-right:0;
+   height:20px;
+   border:1px solid #ccc;
+   padding:0;
+   overflow: hidden;   
+}
+
+.statustext {
+  margin-top:0;
+  
+  margin-left:0;
+  margin-right:0;
+  height:20px;
+  padding:2px 10px;
+  line-height:20px;
+}
+
+.progress {
+    position:relative;
+    float:left;
+    height:100%;
+    width:80%;
+    background-color:#ccf;
+}
+
+
+.progress.bar {
+  float: left;
+  width: 0;
+  height: 100%;
+  font-size: 12px;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #0e90d2;
+  background-image: -moz-linear-gradient(top, #149bdf, #0480be);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#149bdf), to(#0480be));
+  background-image: -webkit-linear-gradient(top, #149bdf, #0480be);
+  background-image: -o-linear-gradient(top, #149bdf, #0480be);
+  background-image: linear-gradient(to bottom, #149bdf, #0480be);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff149bdf', endColorstr='#ff0480be', GradientType=0);
+  -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  -moz-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-transition: width 0.6s ease;
+  -moz-transition: width 0.6s ease;
+  -o-transition: width 0.6s ease;
+  transition: width 0.6s ease;
+  border-radius: 0;
+}
+  
+.progress:after {
+  clear:both;
+}
+
+.progress-text {
+  z-index:100;
+  position:relative;
+  height:100%;
+  line-height:100%;
+  color:#f00;
+  margin-left:auto;
+  margin-right:auto;
+  max-width:5em;
+}
+
+.progressbar span.text { 
+    width: 100%;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    display: inline-block;
+    z-index: 100;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.statustext span {
+  margin-left:10px;
+  display:block;
+  float:left;
+  height:20px;
+  line-height:20px;
+  min-width:30px;
+  font-size: 13px;
+}
+   
+   
+.progresswrap {
+  width:600px;
+  height:44px;
+  border:1px solid #ddd;
+  padding:5px 5px;
+  float:left;
+}
+    
+.form-row:after {
+    clear:both;
+}
+  
+.btn.submit  {
+    min-width:70px;
+}
+
+.statustext .total {
+    width:100px;
+}
+
+.statustext .finish {
+    width:100px;
+}
+
+.statustext .bitrate {
+    width:100px;
+}
+
+div.caption {
+    height:30px;
+    border-bottom:1px solid #aaa;
+    margin-bottom:20px;
+}
+

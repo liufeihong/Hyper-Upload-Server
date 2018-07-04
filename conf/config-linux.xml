@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hywebfileserver version="1.0">
+    <serverconfig
+        port="8021"
+        root="html"
+        tempdir="temp"
+        logdir="log"
+    />
+   
+    <vdirectory> 
+        <location name="videos" path="/Uploads/videos" />
+        <location name="images" path="/Uploads/images" />
+        <location name="audios" path="/Uploads/audio" />
+        <location name="res" path="/Uploads" />
+    </vdirectory>
+
+    <upload dir="/Uploads" key="123456" dirformat="YMD" baseurl="http://ip-to-fix:8021/res">
+        <item id="audio" dir="/Uploads/audio" key="123456" baseurl="http://ip-to-fix:8021/audios"/>
+        <item id="image" dir="/Uploads/images" key="123456" baseurl="http://ip-to-fix:8021/images" />
+        <item id="video" dir="/Uploads/videos" key="123456" baseurl="http://ip-to-fix:8021/videos" />
+        <item id="document" dir="/Uploads/document" key="123456" baseurl="http://ip-to-fix:8021/res/document" />
+    </upload>
+</hywebfileserver>
+

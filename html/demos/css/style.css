@@ -1,0 +1,42 @@
+@charset "UTF-8";
+
+body {
+	padding-top: 60px;
+    font-family: "Microsoft YaHei", 微软雅黑, "Helvetica Neue", Helvetica, PingFangSC-Regular, "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+    color: rgb(49, 49, 49);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    position: relative;
+}
+
+.file-object {
+	border: 1px solid #aca5a5;
+    padding: 5px 6px;
+    border-radius: 3px;
+	margin-bottom: 8px;
+}
+
+.file-object .info-row {
+	line-height: 22px;
+    padding: 2px 2px;
+	overflow: hidden;
+}
+
+
+.file-object .info-row .rlabel{
+	width: 100px;
+	display: block;
+	color: #004302;
+	float:left;
+}
+
+
+.file-object .info-row .rvalue{
+	max-width: 100%;
+	display: block;
+	color: #004302;
+	float:left;
+}
+

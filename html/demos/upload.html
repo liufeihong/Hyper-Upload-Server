@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Files - Minimal</title>
+<style>
+.container {
+  width:600px;
+  margin-left:auto;
+  margin-right:auto;
+  margin-top:100px;
+}
+.row {
+  height:24px;
+  padding:6px 10px 6px 20px;
+  margin-bottom:4px;
+  border-bottom:1px solid #aaa;
+  overflow: auto;
+}
+
+.row label, .row input, .row div {
+  float:left;
+  height:100%;
+}
+
+.row label {
+  width:160px;
+  text-align:right;
+}
+
+.row input, .row div {
+  margin-left:20px;
+}
+  
+.row div {
+  width:100px;
+}
+.row .title {
+  width:160px;
+  text-align:right;
+  display:inline-block;
+}
+
+.row .value {
+  width:160px;
+  padding-left:20px;
+  display:inline-block;
+}
+  
+.row input[type=button],.row input[type=file] {
+  height: 24px;
+  line-height: 20px;
+}
+.row .ctrl-group {
+	width: 360px;
+   float: left;
+   margin-left: 0;
+}
+
+.row .ctrl-group>div {
+	margin-left: 0;
+}
+
+.row .ctrl-group input[type="radio"] {
+    margin-top: 0;
+    height: 24px;
+}
+
+</style>
+<script src="js/updsrvaddr.js"></script>
+<script type="text/javascript">
+//上传地址,根据需要可以修改的
+var upload_url = uploadsrv_addr + "/upload";
+
+var browser = navigator.userAgent.toLowerCase();
+var msie_ver = 999999;
+var pos = browser.indexOf('msie ');
+if (pos > 0) {
+	msie_ver = parseInt(browser.substr(pos+5,3));
+}
+
+function fileSelected() {
+	var fileInput = document.getElementById('fileToUpload');
+	if (fileInput.files) {
+		var file = fileInput.files[0]
+		var fileSize = 0;
+		if (file.size > 1048576)
+			fileSize = (Math.round(file.size / (1048576/100)) / 100).toString() + 'MB';
+		else
+			fileSize = (Math.round(file.size / (1024/100)) / 100).toString() + 'KB';
+
+		document.getElementById('total').innerHTML = fileSize;
+	}
+}
+
+var parse_json = function (str) {
+	var jsonObj;
+
+	if (window.JSON && window.JSON.parse) {
+		jsonObj = window.JSON.parse(str);
+	}
+	else {
+		jsonObj = eval('(' + str + ')');
+	}
+	return jsonObj;
+}
+
+var show_upload_result = function (result)
+{
+	var resultObj = parse_json(result);
+
+	if (typeof(resultObj) == 'object') {
+		var msg = "文件上传完成,服务器返回：<br />";
+
+		for (var i= 0; i < resultObj.files.length; i ++) {
+			msg +='<span>源文件名:</span> <span>' + resultObj.files[i].file + '</span><br />' + 
+				'<span>物理路径:</span> <span>' + resultObj.files[i].path + '</span><br />' + 
+				'<span>访问URL:</span> <span>' + resultObj.files[i].url + '</span><br />' + 
+				'<span>文件尺寸:</span> <span>' + resultObj.files[i].filesize;
+			if ( i != resultObj.files.length - 1) {
+				msg += '<br/>------------------------<br/>';
+			}
+		}
+
+		document.getElementById('result-view').innerHTML = msg;
+	}
+}
+
+/*
+这个函数实现了HTML5方式上传文件，这是当前的主流趋势，这种方式支持Chrome、Firefox等现代浏览器
+MSIE浏览器需要IE9或以上才能支持。
+*/
+function uploadfile_html5(fileInput) {
+	if (!fileInput.files || fileInput.files.length == 0) {
+		alert('请选择文件后在上传!');
+		return;
+	}
+	var file = fileInput.files[0]
+	var myForm = document.getElementById("form1");
+	myForm.filecount.value = fileInput.files.length;
+	myForm.uploadway.value = 'ajax';
+
+	var oldTimestamp = 0;
+	var oldLoadsize = 0;
+	var progressDiv = document.getElementById("progress");
+	var bitrateDiv = document.getElementById("bitrate");
+	var finishDiv = document.getElementById("finish");
+
+	var uploadProgress = function (evt) {
+		if (evt.lengthComputable) {
+			var percentComplete = Math.round(evt.loaded * 100 / evt.total);
+
+			var timestamp = (new Date()).valueOf();
+			var isFinish = evt.loaded == evt.total;
+
+			if (timestamp > oldTimestamp || isFinish) {
+				var duration = timestamp - oldTimestamp;
+				if (duration > 500 || isFinish) {
+					var size = evt.loaded - oldLoadsize;
+
+					var bitrate = (size * 8 / duration /1024) * 1000; //kbps
+					if (bitrate > 1000)
+						bitrate = Math.round(bitrate / 1000) + 'Mbps';
+					else
+						bitrate = Math.round(bitrate) + 'Kbps';
+
+					var finish = evt.loaded;
+
+					if (finish > 1048576)
+						finish = (Math.round(finish / (1048576/100)) / 100).toString() + 'MB';
+					else
+						finish = (Math.round(finish / (1024/100) ) / 100).toString() + 'KB';
+
+					progressDiv.innerHTML = percentComplete.toString() + '%';
+					bitrateDiv.innerHTML = bitrate;
+					finishDiv.innerHTML = finish;
+
+					oldTimestamp = timestamp;
+					oldLoadsize = evt.loaded;
+				}
+			}
+		}
+		else {
+			document.getElementById('progress').innerHTML = 'unable to compute';
+		}
+	};
+
+	var uploadComplete = function (evt) {
+		progressDiv.innerHTML = '100%';
+
+		show_upload_result(evt.target.responseText);
+		myForm.reset();
+	}
+
+	var uploadFailed = function (evt) {
+		alert("上传文件失败！");
+	}
+
+	var uploadCanceled = function (evt) {
+		alert("上传被取消或者浏览器断开了连接！");
+	}
+
+	var fd = new FormData(myForm);
+
+	var xhr = new XMLHttpRequest();
+	xhr.upload.addEventListener("progress", uploadProgress, false);
+	xhr.overrideMimeType("application/octet-stream"); 
+	xhr.addEventListener("load", uploadComplete, false);
+	xhr.addEventListener("error", uploadFailed, false);
+	xhr.addEventListener("abort", uploadCanceled, false);
+	xhr.open("POST", upload_url,true);
+	xhr.send(fd);
+
+	oldTimestamp = (new Date()).valueOf();
+}
+
+/*
+
+这个函数实现了iframe方式上传数据
+由于IE8 或者其它早期的浏览器并不支持FormData数据传送，因此，就采用原始的表单提交数据的方式来上传文件
+由于要实现界面无刷新上传文件数，因此首先必须将form的target指向一个iframe，这样，主界面在上传完成后不会被
+替换为上传结果的响应页。
+
+文件服务器对上传结果的响应是JSON格式的数据，当服务器端判断是iframe方式上传时，则将结果JSON数据进行简单的
+包装，发送给这个iframe。
+由于网页向iframe提取数据可能会存在跨域访问的问题，因此，上传服务器进行了一些特殊的处理，即在发向iframe的
+数据进行了javascript调用，修改了iframe的name属性，将JSON结果赋值给iframe的name属性，然后上传网页通过获取
+iframe的name属性来获得JSON结果。
+
+*/
+function uploadfile_iframe(fileInput) {
+
+	var addEvent = function (obj,type,handle){
+		try{ // Chrome、FireFox、Opera、Safari、IE9.0及其以上版本
+			obj.addEventListener(type,handle,false);
+		}catch(e){
+			try{ // IE8.0
+				obj.attachEvent('on' + type,handle);
+			}catch(e){ 
+				obj['on' + type] = handle;
+			}
+		}
+	}
+
+	var createXMLHttpRequest = function() {
+		var request = false;
+		if (window.XDomainRequest) {
+			request = new XDomainRequest();
+		}
+		else if(window.XMLHttpRequest) {
+			request = new XMLHttpRequest();
+		} else if(window.ActiveXObject) {
+			var versions = ['Microsoft.XMLHTTP', 'MSXML.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.7.0', 'Msxml2.XMLHTTP.6.0', 'Msxml2.XMLHTTP.5.0', 'Msxml2.XMLHTTP.4.0', 'MSXML2.XMLHTTP.3.0', 'MSXML2.XMLHTTP'];
+			for(var i=0, icount=versions.length; i<icount; i++) {
+				try {
+					request = new ActiveXObject(versions[i]);
+					if(request) {
+						return request;
+					}
+				} catch(e) {}
+			}
+		}
+		return request;
+	}
+
+	var myForm = document.getElementById("form1");
+	var fileUploadFrame = document.getElementById("iframe-upload-target");
+
+	var timerId = 0;
+
+	var progressDiv = document.getElementById("progress");
+	var bitrateDiv = document.getElementById("bitrate");
+	var finishDiv = document.getElementById("finish");
+	//用window变量来作为全局变量避免闭包问题
+	window.total_filesize = 0; 
+
+	fileUploadFrame.contentWindow.name = "iframe-upload-target";
+	//文件上传完毕后，将调用这个事件
+	if (!fileUploadFrame.getAttribute('load-event')) {
+		addEvent(fileUploadFrame,'load',function () {
+			var result;
+			//这里的代码是为了实现跨域访问iframe的name属性，IE8目前可能没有跨域问题，但Chrome、Firefox等浏览器有
+			var _this = this;
+			var iframe = fileUploadFrame;
+
+			if (timerid) {
+				clearInterval(timerid);
+				timerid = 0;
+				myForm.reset();
+			}
+
+			var except = 0;
+			//如果是跨域，将会导致异常发生
+			try {
+				result = iframe.contentWindow.name;
+			}
+			catch(e) {
+				except = 1;
+			}
+
+			if (except) {
+				//如果异常，表示跨域访问限制，则修改iframe的location为about:blank再次导致 onload 事件触发
+				//再获取iframe.contentWindow.name就不会发生跨域异常了
+				iframe.contentWindow.location = "about:blank";
+				return;
+			}
+
+			progressDiv.innerHTML = '100%';
+			finishDiv.innerHTML = window.total_filesize;
+
+			//保存或显示最后结果
+			show_upload_result(result);
+		});
+		fileUploadFrame.setAttribute('load-event','true');
+	}
+
+	myForm.filecount.value = 1;
+	myForm.uploadway.value = 'iframe';
+	//向上传服务器传递一个fileid参数用于后续的时间事件查询进度，fileid的值是自定义的，只要保证没有冲突即可
+	var fileid = '?fileid='+ (new Date()).valueOf();
+	//获得URL用于查询进度
+	var url = upload_url;
+	var host_end = url.indexOf('/upload');
+	var progress_url = url.substr(0,host_end) + '/getprogress' + fileid;
+
+	myForm.action = upload_url + fileid;
+
+	var oldTimestamp = 0;
+	var oldLoadsize = 0;
+
+	var updateProgress = function (responseText) {
+		var retObj = parse_json(responseText);
+
+		if (typeof (retObj) == 'object') {
+			var total = parseInt(retObj.total);
+			var finish = parseInt(retObj.finish);
+
+			if (!window.total_filesize) {
+
+				var fileSize = 0;
+
+				if (total > 1048576)
+					fileSize = (Math.round(total / (1048576/100) ) / 100).toString() + 'MB';
+				else
+					fileSize = (Math.round(total / (1024/100) ) / 100).toString() + 'KB';
+
+				document.getElementById('total').innerHTML = fileSize;
+
+				window.total_filesize = fileSize;
+			}
+
+			if (!total || total < 100) total = 100;
+			var percent = Math.round(finish / (total/100) );
+
+			var timestamp = (new Date()).valueOf();
+
+			var duration = timestamp - oldTimestamp;
+			if (duration > 500) {
+				var size = finish - oldLoadsize;
+				var bitrate = size * 8 * 1000/ duration /1024; //kbps
+				if (bitrate > 1000)
+					bitrate = Math.round(bitrate / 1000) + 'Mbps';
+				else
+					bitrate = Math.round(bitrate) + 'Kbps';
+
+				oldTimestamp = timestamp;
+				oldLoadsize = finish;
+
+				if (finish > 1048576)
+					finish = (Math.round(finish/ (1048576/100))/100).toString() + 'MB';
+				else
+					finish = (Math.round(finish/ (1024/100))/100).toString() + 'KB';
+
+				progressDiv.innerHTML = percent.toString() + '%';
+				bitrateDiv.innerHTML = bitrate;
+				finishDiv.innerHTML = finish;
+			}
+		}
+	}
+
+	var in_progress = false;
+	var progressReq = createXMLHttpRequest();
+
+	//这个时间事件用于查询进度与上传数据数量
+	timerid = window.setInterval(function () {
+
+		if (in_progress)
+			return;
+
+		if (!progressReq)
+			progressReq = createXMLHttpRequest(); 
+
+		if (window.XDomainRequest) {
+			//IE8 XDomainRequest 没有onreadystatechange事件
+			progressReq.onload = function () { //
+				updateProgress(this.responseText);
+				in_progress = false;
+			}
+		}
+		else {
+			progressReq.onreadystatechange = function () {  
+				if (this.readyState == 4 && this.status == 200) {
+					//4: 请求已完成，且响应已就绪
+					updateProgress(this.responseText);
+					in_progress = false;
+					if (msie_ver == 7) {
+						//IE7 不能重用对象，每次请求都需要重新创建对象
+						progressReq = null;
+					}
+				}
+			}
+		}
+
+		in_progress = true;
+		if(window.XMLHttpRequest) {
+			//TODO:IE7 可能出现跨域拒绝访问
+			progressReq.open('GET', progress_url + '&time='+(new Date()).valueOf());
+			progressReq.send(null);
+		} else {
+			progressReq.open("GET", progress_url + '&time='+(new Date()).valueOf(),true);
+			progressReq.send();
+		}
+	},500);
+
+	myForm.submit();
+}
+
+function onUploadFile(btn)
+{
+	var fileInput = document.getElementById('fileToUpload');
+	if (fileInput.value == '') {
+		alert('请选择文件以后再上传!');
+		return false;
+	}
+
+	var uploadWay = document.getElementById('form1').uploadmethodSelect.value;
+	
+	if (uploadWay != 'iframe' && typeof (window.FormData) == 'function') {
+		//支持HTML5 FormData 表示是新的浏览器
+		document.getElementById('uploadmethod').innerHTML = 'HTML5';
+		uploadfile_html5(fileInput);
+	}
+	else {
+		//哎！继续用老旧浏览器
+		document.getElementById('uploadmethod').innerHTML = 'IFRAME';
+		uploadfile_iframe(fileInput);
+	}
+}
+
+</script>
+</head>
+<body>
+<div class="container">
+<form id="form1" enctype="multipart/form-data" method="post" action="" target="iframe-upload-target">
+  <input type="hidden" name="filecount" value="1" />
+  <input type="hidden" name="uploadway" value="ajax" />
+  <div class="row">
+    <label for="fileToUpload">选择上传文件：</label>
+    <input type="file" name="fileToUpload" id="fileToUpload" onchange="fileSelected();"/>
+  </div>
+  <div class="row">
+    <label for="uploadway">上传方式选择：</label>
+    <div class="ctrl-group">
+		<div><input type="radio" name="uploadmethodSelect" id="uploadmethod-html5" value="html5"/>html5</div>
+		<div><input type="radio" name="uploadmethodSelect" id="uploadmethod-iframe"  value="iframe"/>iFrame</div>
+		<div><input type="radio" name="uploadmethodSelect" id="uploadmethod-auto"  value="auto"/ checked>自动选择</div>
+	</div>
+  </div>
+  <div class="row"><span class="title">文件总长度：</span><span class="value" id="total">0</span></div>
+  <div class="row"><span class="title">已经上传长度：</span><span class="value" id="finish">0</span></div>
+  <div class="row"><span class="title">上传进度：</span><span class="value" id="progress">0%</span></div>
+  <div class="row"><span class="title">上传位率：</span><span class="value" id="bitrate">0</span></div>
+  <div class="row"><span class="title">上传方式：</span><span class="value" id="uploadmethod">N/A</span></div>
+  <div class="row">
+    <label >&nbsp;</label> <input type="button" onclick="onUploadFile(this)" value="开始上传" />
+  </div>
+  <div id="result-view">
+  </div>
+</form>
+</div>
+<iframe src="about:blank" width="200" height="1000" style="display:none" name="iframe-upload-target" id="iframe-upload-target"></iframe>
+</body>
+</html>

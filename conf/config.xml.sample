@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hywebfileserver version="1.0">
+    <serverconfig
+        port="8008"
+        root="html"
+        tempdir="temp"
+        logdir="log"
+    />
+   
+    <document> 
+        <root name="file" location="c:/webroot" />
+        <root name="webserver" location="c:/webserver" />
+    </document>
+<!--
+upload 节点为文件上传的配置节点，包括以下属性：
+directory: 
+   文件上传的根目录，一般为web服务器根文档目录下的一个子目录，当然可以是任意位置，这里设置的为全局目录
+key:
+   上传目录的密码，用于上传认证，防止恶意上传文件，文件上传服务器用这个密码与当前年月日字符串连接后再用
+   MD5函数计算hash值，再与浏览器端传送过来的密码串进行比较，例如：
+   假设上传日期为2017年7月10日的，则日期字符串为：20170710,密码为：123456，则用 20170710123456 字符串的MD5
+   值：81a2dccf381428f07bf100bdea1a2dd5 来检验认证，浏览器端上传时必须在key字段处传送81a2dccf381428f07bf100bdea1a2dd5
+   过来，这个key可以通过web服务器生成后传送到网页端，然后在上传文件时传送给上传服务器。
+   如果不需要密码认证，则不要设置这个属性或者将这个属性设置为空
+dirformat:
+   为目录创建格式，上传服务器将在上传目录下创建一个目录，
+
+每个item代表一中上传的文件类，自行定义，可以添加多个item
+id  - 自行定义,用于标识这个文件上传类的id，同时用于上传的目录后缀
+-->	
+    <upload dir="e:/webroot/uploads" key="123456" dirformat="Y-M-D">
+        <item id="audio" dir="e:/webroot/uploads/audio" key="123456" />
+        <item id="image" dir="e:/webroot/uploads/images" key="123456" />
+        <item id="video" dir="e:/webroot/uploads/videos" key="123456" />
+        <item id="document" dir="e:/webroot/uploads/document" key="123456" />
+    </upload>
+</hywebfileserver>
+

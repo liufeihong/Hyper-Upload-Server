@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf8" />
+<meta http-equiv="x-ua-compatible" content="ie=8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Files using XMLHttpRequest - Minimal</title>
+
+<style>
+.container {
+	width:602px;
+	margin-top:100px;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+#progresswrap {
+  width:600px;
+  height:44px;
+  border:1px solid #ddd;
+  padding:5px 5px;
+}
+.progressbar {
+   position:relative;
+   margin-left:0;
+   margin-right:0;
+   height:20px;
+   border:1px solid #ccc;
+   padding:0;      
+}
+
+.statustext {
+  margin-top:0;
+  
+  margin-left:0;
+  margin-right:0;
+  height:20px;
+  padding:2px 10px;
+  line-height:20px;
+}
+
+.progress {
+	position:relative;
+	float:left;
+	height:100%;
+	width:80%;
+	background-color:#ccf;
+}
+
+
+.progress.bar {
+  float: left;
+  width: 0;
+  height: 100%;
+  font-size: 12px;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #0e90d2;
+  background-image: -moz-linear-gradient(top, #149bdf, #0480be);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#149bdf), to(#0480be));
+  background-image: -webkit-linear-gradient(top, #149bdf, #0480be);
+  background-image: -o-linear-gradient(top, #149bdf, #0480be);
+  background-image: linear-gradient(to bottom, #149bdf, #0480be);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff149bdf', endColorstr='#ff0480be', GradientType=0);
+  -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  -moz-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-transition: width 0.6s ease;
+  -moz-transition: width 0.6s ease;
+  -o-transition: width 0.6s ease;
+  transition: width 0.6s ease;
+}
+  
+.progress:after {
+  clear:both;
+}
+
+.progress-text {
+  z-index:100;
+  position:relative;
+  height:100%;
+  line-height:100%;
+  color:#f00;
+  margin-left:auto;
+  margin-right:auto;
+  max-width:5em;
+}
+
+.progressbar span.text { 
+	width: 100%;
+	height: 20px;
+	line-height: 20px;
+	text-align: center;
+	display: inline-block;
+	z-index: 100;
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.statustext span {
+  margin-left:10px;
+  display:block;
+  float:left;
+  height:20px;
+  line-height:20px;
+  min-width:30px;
+  font-size: 13px;
+}
+
+.row {
+	margin-bottom:10px;
+}
+ 
+</style>
+
+<script src="js/updsrvaddr.js"></script>
+
+<script type="text/javascript">
+  function fileSelected() {
+	var file = document.getElementById('fileToUpload').files[0]
+	if (file) {
+	  var fileSize = 0;
+	  if (file.size > 1024 * 1024)
+		fileSize = (Math.round(file.size * 100 / (1024 * 1024)) / 100).toString() + 'MB';
+	  else
+		fileSize = (Math.round(file.size * 100 / 1024) / 100).toString() + 'KB';
+
+	  document.getElementById('fileName').innerHTML = 'Name: ' + file.name;
+	  document.getElementById('fileSize').innerHTML = 'Size: ' + fileSize;
+	  document.getElementById('fileType').innerHTML = 'Type: ' + file.type;
+	}
+  }
+
+  var progressBar = null;
+  var oldTimestamp = 0;
+  var oldLoadsize = 0;
+   //文件上传服务器地址，如果在别的Web服务器里，请用绝对地址，例如：
+  var upload_url = uploadsrv_addr + "/upload/video";
+  
+  function uploadFile() {
+	var file = document.getElementById('fileToUpload').files[0]
+	if (!file) {
+	  return;
+	}
+	
+	var fileSize = 0;
+	if (file.size > 1024 * 1024)
+	  fileSize = (Math.round(file.size * 100 / (1024 * 1024)) / 100).toString() + 'MB';
+	else
+	  fileSize = (Math.round(file.size * 100 / 1024) / 100).toString() + 'KB';
+	
+	
+	if (!progressBar) {
+	  progressBar = HUAYI.ProgressBar('uploadProgress','uploadStatusBar');
+	  
+	}
+	
+	if (progressBar) {
+	  progressBar.setProgress(0);
+	  
+	  progressBar.setTotal(fileSize);
+	}
+	
+   var myForm = document.getElementById("form1");  
+	var fd = new FormData(myForm);
+	//fd.append("filecount", "1");
+	fd.append("callback", "");
+	fd.append("uploadway", "ajax");
+   // fd.append("fileToUpload", document.getElementById('fileToUpload').files[0]); //
+	var xhr = new XMLHttpRequest();
+	xhr.upload.addEventListener("progress", uploadProgress, false);
+	xhr.overrideMimeType("application/octet-stream"); 
+	xhr.addEventListener("load", uploadComplete, false);
+	xhr.addEventListener("error", uploadFailed, false);
+	xhr.addEventListener("abort", uploadCanceled, false);
+	xhr.open("POST", upload_url ,true);
+	xhr.send(fd);
+	oldTimestamp = (new Date()).valueOf();
+	//setTimeout(function () {
+	//  
+	//},500);
+  }
+
+  function uploadProgress(evt) {
+	if (evt.lengthComputable) {
+	  var percentComplete = Math.round(evt.loaded * 100 / evt.total);
+	  document.getElementById('progressNumber').innerHTML = percentComplete.toString() + '%';
+	  progressBar.setProgress(percentComplete);
+	  
+	  var timestamp = (new Date()).valueOf();
+	  if (timestamp > oldTimestamp) {
+		var duration = timestamp - oldTimestamp;
+		if (duration > 500) {
+		  var size = evt.loaded - oldLoadsize;
+		  
+		  //if (size > 1048576)
+		  //  fileSize = (Math.round(file.size * 100 / (1024 * 1024)) / 100).toString() + 'MB';
+		  //else
+		  //  fileSize = (Math.round(file.size * 100 / 1024) / 100).toString() + 'KB';
+		  
+		  var bitrate = size * 8 * 1000/ duration /1024; //kbps
+		  if (bitrate > 1000)
+			bitrate = Math.round(bitrate / 1000) + 'Mbps';
+		  else
+			bitrate = Math.round(bitrate) + 'Kbps';
+		  
+		  var finish = evt.loaded;
+		  
+		  if (finish > 1048576)
+			finish = (Math.round(finish * 100 / (1024 * 1024)) / 100).toString() + 'MB';
+		  else
+			finish = (Math.round(finish * 100 / 1024) / 100).toString() + 'KB';
+		  
+		  progressBar.setStatus(finish,bitrate);
+		  
+		  oldTimestamp = timestamp;
+		  oldLoadsize = evt.loaded;
+		}
+	  }
+	}
+	else {
+	  document.getElementById('progressNumber').innerHTML = 'unable to compute';
+	}
+  }
+
+  function uploadComplete(evt) {
+	progressBar.setProgress(100);
+	/* This event is raised when the server send back a response */
+	//alert(evt.target.responseText);
+  }
+
+  function uploadFailed(evt) {
+	alert("There was an error attempting to upload the file.");
+  }
+
+  function uploadCanceled(evt) {
+	alert("The upload has been canceled by the user or the browser dropped the connection.");
+  }
+  
+  
+  var HUAYI = {};
+  
+  HUAYI.ProgressBar = function (id,statusID) {
+	var getById = function(id) {
+	  return typeof id === "string" ? document.getElementById(id) : id;
+	},
+	getByClass = function(sClass, oParent) {
+	  var aClass = [];
+	  var reClass = new RegExp("(^| )" + sClass + "( |$)");
+	  var aElem = getByTagName("*", oParent);
+	  for (var i = 0; i < aElem.length; i++) reClass.test(aElem[i].className) && aClass.push(aElem[i]);
+	  if (aClass.length == 0) aClass[0] = null;
+	  return aClass;
+	},
+	getByTagName = function(elem, obj) {
+	  if (obj) return obj.getElementsByTagName(elem);
+	  else return document.getElementsByTagName(elem);
+	};
+	
+	var progressBar = getById(id);
+	var progress = getByClass("progress",progressBar)[0];
+	var progressText = getByClass("text",progressBar)[0];
+	
+	var total,finish,bitrate;
+	if (statusID ) {
+	  var statusBar = getById(statusID);
+	  total = getByClass("total",statusBar)[0];
+	  finish = getByClass("finish",statusBar)[0];
+	  bitrate = getByClass("bitrate",statusBar)[0];
+	}
+	
+	return {
+	  _progress:progress,
+	  _text:progressText,
+	  _total:total,
+	  _finish:finish,
+	  _bitrate:bitrate,
+	
+	  setProgress: function(value) {
+		if (this._progress) {
+		  this._progress.style.width = value + '%';
+		}
+		if (this._text) {
+		  this._text.innerHTML = value + '%';
+		}
+	  },
+	  setTotal: function(value) {
+		this._total.innerHTML = value;
+	  },
+	  setStatus:function(finish,bitrate) {
+		if (this._bitrate) {
+		  this._bitrate.innerHTML = bitrate;
+		}
+		if (this._finish) {
+		  this._finish.innerHTML = finish;
+		}
+	  }
+	}
+  };
+  
+</script>
+    
+
+</head>
+<body>
+<div class="container">
+  <form id="form1" enctype="multipart/form-data" method="post" action="Upload.aspx">
+    <input type="hidden" name="filecount" value="1" />
+    <input type="hidden" name="uploadway" value="ajax" />
+    <div class="row">
+      <label for="fileToUpload">Select a File to Upload</label><br />
+      <input type="file" name="fileToUpload" id="fileToUpload" onchange="fileSelected();"/>
+    </div>
+    <div id="fileName"></div>
+    <div id="fileSize"></div>
+    <div id="fileType"></div>
+    <div class="row">
+      <input type="button" onclick="uploadFile()" value="Upload" />
+    </div>
+    
+    <div id="progresswrap">
+      <div id="uploadProgress" class="progressbar">
+        <div class="progress bar">
+        </div>
+        <span class="text">
+          0%
+        </span>
+      </div>
+      <div id="uploadStatusBar" class="statustext">
+        <span>总长度：</span><span class="total"></span>
+        <span>已经传输：</span><span class="finish" style="width:80px"></span>
+        <span>传输率：</span><span class="bitrate" style="width:80px"></span>
+      </div>
+    </div>
+    
+    <div id="progressNumber">
+      
+    </div>
+  </form>
+</div>
+</body>
+</html>

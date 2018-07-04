@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Files - Simple</title>
+<style>
+body {
+  margin:2px 0;
+  padding:0px;
+  color:#313131;
+  font-family: "微软雅黑","Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  font-size:13px;
+}
+  
+input {
+  border:1px solid #bbb;
+  vertical-align:middle;
+  font-size:13px;
+  border-radius: 3px;
+  min-width:70px;
+  line-height: 20px;
+  padding: 3px 6px;
+  box-sizing: border-box;
+}
+
+input[type="file"] {width: 100%;}
+
+.file-wrap{
+  float: left;
+  height: 28px;
+  line-height: 26px;
+  background: #fafafa;
+  width: 260px;
+  position: relative;
+  border: 1px solid #bdbcbd;
+  border-radius: 3px;
+  margin-right: 6px;
+  overflow : hidden;
+  padding-left:3px;
+  padding-right:3px;
+  box-sizing: border-box;
+}
+.file-browser{
+  text-align: center;
+  font-size: 14px;
+  height: 22px;
+  line-height: 22px;
+  border:0px;
+  margin-left: 4px;
+  margin-right: 4px;
+  overflow: hidden;
+  padding: 2px 0;
+}
+
+.hidefileobj{
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0;
+  opacity: 0;
+  -ms-filter: 'alpha(opacity=0)';
+  filter:alpha(opacity=0);
+  -moz-opacity:0;
+  font-size: 200px !important;
+  direction: ltr;
+  cursor: pointer;
+  display:block;
+}
+
+.uploadbtn {
+  background-color: #fff;
+  cursor:pointer;
+  height: 28px;
+}
+
+form {
+  margin-bottom: 0;
+}
+.result-view {
+	padding:10px 6px;
+	margin-top:10px;
+	border: 1px solid #ccc;
+}
+
+.container {
+  width:1000px;
+  margin-left:auto;
+  margin-right:auto;
+  margin-top:100px;
+}
+#upload-result {
+	min-height:100px;
+	background-color: #f0f0f0;
+}
+</style>
+<script src="js/updsrvaddr.js"></script>
+<script language="javascript">
+var uploadsrv_url = uploadsrv_addr + "/upload/document";
+//通用的 DOM 绑定事件代码
+var addEvent = function (obj,type,handle){
+	try{ // Chrome、FireFox、Opera、Safari、IE9.0及其以上版本
+		obj.addEventListener(type,handle,false);
+	}catch(e){
+		try{ // IE8.0
+			obj.attachEvent('on' + type,handle);
+		}catch(e){ 
+			obj['on' + type] = handle;
+		}
+	}
+}
+
+function onFileChange(obj) {
+	var fnObj = document.getElementById("filename");
+	if (fnObj) {
+		if (obj.value != '') {
+			fnObj.innerHTML = obj.value;
+			fnObj.title = obj.value;
+		}
+		else {
+			fnObj.innerHTML = '选择要上传的文件';
+			fnObj.title = '';
+		}
+	}
+}
+
+function onSubmit(submitBtn) {
+	var fileobj = document.getElementById("fileobj");
+	if (fileobj.value == '') {
+		alert('请选择文件以后再上传!');
+		return false;
+	}
+	var filename = document.getElementById("filename");
+	filename.innerHTML = "正在上传文件，请稍候...";
+
+	var fileUploadFrame = document.getElementById("iframe-upload-target");
+	if (!fileUploadFrame.isBindTarget) {
+		addEvent(fileUploadFrame,'load',function () {
+			var _this = this;
+			var iframe = fileUploadFrame;
+			var result;
+			var except = 0;
+			
+			try {
+				result = iframe.contentWindow.name;
+			}
+			catch(e) {
+				except = 1;
+			}
+			
+			if (except) {
+				//如果异常，表示跨域访问限制，则修改iframe的location为about:blank再次导致 onload 事件触发
+				//再获取iframe.contentWindow.name就不会发生跨域异常了
+				iframe.contentWindow.location = "about:blank";
+				return;
+			}
+			//重置iframe的name便于下次再用
+			iframe.contentWindow.name = 'iframe-upload-target';
+			
+			filename.innerHTML = "上传完成，点击上传其它文件";
+			fileobj.style.display = 'block';
+			submitBtn.removeAttribute('disabled');
+			submitBtn.style.color = "#111";
+			//在这里分析上传结果哦
+			document.getElementById("upload-result").innerHTML = result;
+		});
+		//加了一个自定义成员避免再次绑定事件
+		fileUploadFrame.isBindTarget = true;
+	}
+
+	fileobj.form.action=uploadsrv_url;
+	fileobj.form.target = 'iframe-upload-target';
+	fileobj.style.display = 'none';
+	submitBtn.disabled = 'disabled';
+	submitBtn.style.color = "#ccc";
+	submitBtn.form.submit();
+	
+	return false;
+}
+
+</script>
+</head>
+<body>
+<div class="container">
+	<form action="/upload/document" method="post" enctype="multipart/form-data" name="hxform" target="upload-result">
+	  <input name="filecount" type="hidden" value="1">
+	  <input name="uploadway" type="hidden" value="iframe">
+	  <div class="file-wrap">
+		<div class="file-browser" id="filename">选择要上传的文件</div>
+		<input type="file" class="hidefileobj" name="file" id="fileobj" onchange="onFileChange(this);">
+	  </div>
+	  <input type="button" value="上 传" class="uploadbtn" onclick="return onSubmit(this);">
+	</form>
+	<div class="result-view">
+	<h1>上传返回的结果(JSON)</h1>
+	<div id="upload-result"></div>
+	</div>
+</div>
+<!-- 一个隐藏的iframe来接收上传结果 -->
+<iframe name="iframe-upload-target" id="iframe-upload-target" style="display:none;width:0px;height:0px;"></iframe>
+</body>
+</html>

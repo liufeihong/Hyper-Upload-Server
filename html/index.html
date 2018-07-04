@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<!--[if lte IE 6 ]> <html class="ie ie6 lte_ie7 lte_ie8 lte_ie9" lang="zh-CN"> <![endif]-->
+<!--[if IE 7 ]> <html class="ie ie7 lte_ie7 lte_ie8 lte_ie9" lang="zh-CN"> <![endif]-->
+<!--[if IE 8 ]> <html class="ie ie8 lte_ie8 lte_ie9" lang="zh-CN"> <![endif]-->
+<!--[if IE 9 ]> <html class="ie ie9 lte_ie9" lang="zh-CN"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="zh-CN"> <!--<![endif]-->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件上传服务器-管理页</title>
+<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+<link rel="stylesheet" type="text/css" href="css/bootstrap-responsive.min.css"/>
+<link rel="stylesheet" type="text/css" href="css/style.css"/>
+<script language="javascript" type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+<script language="javascript" type="text/javascript" src="js/bootstrap.min.js"></script>
+<script language="javascript" type="text/javascript" src="js/jquery-toast.js"></script>
+<script language="javascript" type="text/javascript" src="js/qrcode.min.js"></script>
+
+<script type="text/javascript">
+
+$(document).ready(function (){
+    $.get("/getlicense",
+    {"time":(new Date()).valueOf()},
+    function (data) {
+        var lic = $.parseJSON(data);
+        if (lic.trial == '1') {
+            $('#trial-end-date').html(lic.enddate);
+            $('#license-tip').slideToggle(2000);
+        }
+        else {
+            $('#license-tip').remove();
+        }
+    });
+    
+    $('#upload-file').click(function (evt) {
+        //evt.preventDefault();
+        
+    });
+    
+    $('#aboutbox').on('show.bs.modal',function () {
+        $aboutbox = $(this);
+        $.get("/getlicense",
+            {"time":(new Date()).valueOf()},
+            function (data) {
+            var lic = $.parseJSON(data);
+            $aboutbox.find('span.verion').html(lic.ver);
+            $aboutbox.find('span.serialno').html(lic.sn);
+            if (lic.trial == '1') {
+                $aboutbox.find('span.lictype').html('<font color="#f00">试用版</font>&nbsp;截至日期：<font color="#f00">' + lic.enddate + '</font>');
+                $aboutbox.find('buttom.btn-primary').show();
+            }
+            else {
+                $aboutbox.find('span.lictype').html('<font color="#00b72e">正式版</font>');
+                $aboutbox.find('buttom.btn-primary').hide();
+            }
+        });
+    });
+    
+    $('#registerbox').on('show.bs.modal',function () {
+         $registerbox = $(this);
+        
+         $.get("/getlicense",
+            {"time":(new Date()).valueOf()},
+            function (data) {
+            var lic = $.parseJSON(data);
+                
+            $registerbox.find('span.serialno').html(lic.sn);
+            if (lic.trial == '1') {
+                $registerbox.find('span.lictype').html('<font color="#f00">试用版</font>&nbsp;截至日期：<font color="#f00">' + lic.enddate + '</font>');
+                $registerbox.find('buttom.btn-primary').show();
+            }
+            else {
+                $registerbox.find('span.lictype').html('<font color="#00b72e">正式版</font>');
+                $registerbox.find('buttom.btn-primary').hide();
+            }
+         });
+    });
+	
+	//显示二维码
+	var hostname=window.location.protocol + '//' + window.location.host;
+
+	var mobile_url = hostname + '/demos/h5mobile.html?t='+(new Date()).getTime();
+	var qrcode = new QRCode("mobile-qrcode", {
+		text: mobile_url,
+		width: 200,
+		height: 200,
+		colorDark : "#000000",
+		colorLight : "#ffffff",
+		correctLevel : QRCode.CorrectLevel.H
+	});
+
+});
+
+function aboutToRegister() {
+    $('#aboutbox').modal('hide');
+    $('#registerbox').modal('show');
+}
+
+function onLicFileChange(fileobj) {
+    var addEvent = function (obj,type,handle){
+    try{ // Chrome、FireFox、Opera、Safari、IE9.0及其以上版本
+      obj.addEventListener(type,handle,false);
+      }catch(e){
+      try{ // IE8.0
+        obj.attachEvent('on' + type,handle);
+        }catch(e){ 
+        obj['on' + type] = handle;
+      }
+    }
+  }
+  
+  var myForm = fileobj.form;
+  var fileUploadFrame = document.getElementById("iframe-upload-target");
+  
+  fileUploadFrame.name = "iframe-upload-target";
+  fileUploadFrame.contentWindow.name = "iframe-upload-target";
+  
+  if (!fileUploadFrame.getAttribute('load-event')) {
+      addEvent(fileUploadFrame,'load',function () {
+        var result;
+        
+        var _this = this;
+        var iframe = fileUploadFrame;
+  
+        var doc = iframe.contentDocument || iframe.contentWindow.document;
+        //alert(doc.body.innerText);
+        myForm.reset();
+
+        var $registerbox = $('#registerbox');
+        
+        var lic = $.parseJSON(doc.body.innerText);
+            
+        if (lic.error) {
+            var msg;
+            var flags = lic.code;
+            if (flags == 0)
+                msg = "许可证装入错误，可能不是正确的许可证文件！";
+            else if (flags == 1) 
+                msg = "许可证的产品类型不符合！";
+            else if (flags == 2) 
+                msg = "许可证文件更新错误，也许没有正确的权限。";
+            else if (flags == 3) 
+                msg = "许可证文件刷新错误，也许没有文件操作权限。";
+            else if (flags == 4) 
+                msg = "许可证文件校验失败，不是合法的许可证文件。";
+            else
+                msg = "导入许可证发生未知错误。";
+            
+            $().toastmessage('showToast', {
+                text     : "更新许可证出现错误。<br/>错误原因：<br/>"+msg+"<br/>",
+                sticky   : false,
+                stayTime : 6000,
+                position : 'top-center',
+                type     : 'error',
+                close    : function () { /*console.log("toast is closed ...");*/}
+            });
+        }
+        else {
+            $registerbox.find('span.serialno').html(lic.sn);
+            if (lic.trial == '1') {
+                $registerbox.find('span.lictype').html('<font color="#f00">试用版</font>&nbsp;截至日期：<font color="#f00">' + lic.enddate + '</font>');
+                $registerbox.find('buttom.btn-primary').show();
+            }
+            else {
+                $registerbox.find('span.lictype').html('<font color="#00b72e">正式版</font>');
+                $registerbox.find('buttom.btn-primary').hide();
+            }
+            
+            $().toastmessage('showToast', {
+                text     : "导入许可证成功！<br/>",
+                sticky   : false,
+                stayTime : 3000,
+                position : 'top-center',
+                type     : 'success',
+                close    : function () { /*console.log("toast is closed ...");*/}
+            });
+        }
+      });
+      fileUploadFrame.setAttribute('load-event','true');
+  }
+   
+  //myForm.action="/register?time=" + (new Date()).valueOf();
+  myForm.submit();
+}
+</script>
+</head>
+<body>
+
+<div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+    <div class="container-fluid">
+      <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <span class="brand" href="#">文件上传服务</span>
+      <div class="nav-collapse collapse">
+        <ul class="nav">
+          <li class="active"><a id="showaboutbox" href="#aboutbox" role="button" data-toggle="modal">关于</a></li>
+          <li><a href="#registerbox" role="button" data-toggle="modal">注册</a></li>
+        </ul>
+      </div><!--/.nav-collapse -->
+    </div>
+    </div>
+</div>
+    
+<div class="container-fluid wrap">
+  <div class="row-fluid" id="license-tip" style="display:none">
+     <div class="control-wrap">
+       <div class="alert alert-block">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <h4>温馨提示：</h4>
+          <span>当前产品为非正式版或者您还没有用许可证书注册产品，请注册产品以便更好地为您服务。</span><br>
+		   <span>在没有许可证书的情况下，上传服务器可能工作几个小时后会停止返回上传信息，将上传服务器重启即可恢复正常工作几个小时。</span>
+          <br/>
+          <span>试用结束日期:&nbsp;</span><span id="trial-end-date" style="color:#f00">1999-01-01</span>
+       </div>
+    </div>
+    <div class="control-wrap">
+		<a href="#registerbox" class="btn btn-center" role="button" data-toggle="modal">注册许可证</a>
+	</div>
+  </div>
+  <div class="row-fluid" >
+    <div class="page-header">
+	  <h3>Upload Examples <small>HTTP大文件断点续传的一些实现样本代码。</small></h3>
+	</div>
+  </div>
+  
+  <div class="row-fluid" >
+    <div class="control-wrap">
+		<ul class="list-group">
+		  <li href="#" class="list-group-item">
+			<a class="list-group-item-heading h4" href="demos/simple.html" target="__simple">最简单的HTTP大文件上传</a>
+			<p class="list-group-item-text">演示了HTML网页里最简单的大文件上传，用最原始的POST方式上传文件。用iframe接收上传结果，避免页面刷新，支持跨域上传并获取结果。兼容任何浏览器。</p>
+		  </li>
+		  
+		  <li href="#" class="list-group-item">
+			<a class="list-group-item-heading h4" href="demos/upload.html" target="__upload">HTTP大文件上传</a>
+			<p class="list-group-item-text">演示了如何通过HTML5技术与传统的iframe文件上传技术来支持大文件上传，并显示文件的进度，上传速率等。可以自动决策采用何种技术上传大文件。</p>
+		  </li>
+		  <li href="#" class="list-group-item" >
+			<a class="list-group-item-heading h4" href="demos/h5resume.html" target="__h5resume">具有断点续传功能的HTML5大文件上传(适合于PC机)</a>
+			<p class="list-group-item-text">演示了如何通过html5技术实现大文件断点续传，用到了file对象的slice函数，失败重连功能。</p>
+		  </li>
+		  <li href="#" class="list-group-item" >
+			<a class="list-group-item-heading h4" href="demos/h5mobile.html" target="__h5mobile">具有断点续传功能的HTML5大文件上传(适合于手机)</a>
+			<p class="list-group-item-text">演示了如何通过html5技术实现大文件断点续传，用到了file对象的slice函数，失败重连功能。(<font color="red">请在手机里打开此链接</font>)</p>
+		  </li>
+		  <li href="#" class="list-group-item">
+			<a class="list-group-item-heading h4" href="demos/h5upload.html" target="__h5upload">简单的H5大文件上传</a>
+			<p class="list-group-item-text">演示了如何通过H5技术实现文件上传，为了简化，没有支持文件断点续传。</p>
+		  </li>
+		  <li href="#" class="list-group-item">
+			<a class="list-group-item-heading h4" href="demos/jQueryUpload.index.html" target="__jQueryUpload">如何调用jQueryUpload来支持大文件断点续传</a>
+			<p class="list-group-item-text">演示了如何通过jQueryUpload</a>文件上传组件实现大文件断点续传，失败重连功能。</p>
+		  </li>
+       </ul>
+	</div>
+	<div class="bs-callout bs-callout-info" id="callout-alerts-dismiss-plugin">
+    <h4>温馨提示</h4>
+    <p>所有的例子代码位于安装目录的html/demos子目录里，可以将demos复制到任何WEB服务器的文档目录来测试上传功能。<br>
+	   文件上传的代码可以用于任何浏览器，包括但不限于Windows、iOS与Android设备，微信内建的浏览器也是可以用的。<br>
+	   <font color="red">将html/demos子目录复制到其它Web服务器目录下后记得修改js/updsrvaddr.js文件来正确配置上传服务器。</font></p>
+   </div>
+  </div>
+</div>
+<div class="qrcode-box">
+   <div class="qrcode" id="mobile-qrcode"></div>
+   <div class="textbox">用手机微信扫码或二维码工具扫码测试手机文件上传</div>
+</div>
+<!-- Modal -->
+<div id="aboutbox" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <div id="myModalLabel" class="dlg-captionbar"><span class="dlg-caption">关于</span><button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button></div>
+  </div>
+  <div class="modal-body">
+    <p>Web 文件上传服务器</p>
+    <p><span class="label-title">版本：</span><span class="verion">1.0 (2017)</span></p>
+    <p><span class="label-title">序列号：</span><span class="serialno">AC11-KSBV-CCSC-DSCV-VBSS</span></p>
+    <p><span class="label-title">许可证：</span><span class="lictype">已经授权</span></p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">&nbsp;关闭&nbsp;</button>
+    <button class="btn btn-primary" onclick="aboutToRegister();">注册许可证</button>
+  </div>
+</div>
+ 
+<div id="registerbox" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <div id="myModalLabel" class="dlg-captionbar"><span class="dlg-caption">产品注册</span><button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button></div>
+  </div>
+  <div class="modal-body">
+    <p><span class="label-title">序列号：</span><span class="serialno">AC11-KSBV-CCSC-DSCV-VBSS</span></p>
+    <p><span class="label-title">许可证：</span><span class="lictype">试用版</span></p>
+    <p class="note-title">注册提示：</p>
+    <p>要注册本产品，请将以上序列号发送给软件生产商后向软件生产商取得许可证书，再将软件生产商生成的许可证书文件导入到本系统即可。</p>
+    <p>如果已经导入许可证，也可以继续导入新的许可证。</p>
+    <div class="row-fluid" >
+      <form action="/register" method="post" enctype="multipart/form-data" name="regform" data-form="regform" target="iframe-upload-target">
+      <input name="filecount" type="hidden" value="1">
+      <input name="uploadway" type="hidden" value="iframe">
+      <div class="file-wrap">
+        <div class="file-browser">导入许可证文件</div>
+        <input type="file" class="fileobj" name="file" id="fileobj" onchange="onLicFileChange(this);" accept="text/lic,application/lic">
+      </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">&nbsp;关闭&nbsp;</button>
+  </div>
+</div>
+
+<iframe src="about:blank" width="1" height="1" style="display:none" name="iframe-upload-target" id="iframe-upload-target"></iframe>
+</body>
+</html>

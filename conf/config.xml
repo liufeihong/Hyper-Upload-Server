@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hywebfileserver version="1.0">
+    <serverconfig
+        port="8080"
+        root="html"
+        tempdir="temp"
+        logdir="log"
+    />
+   
+    <vdirectory> 
+        <location name="videos" path="D:/Uploads/videos" />
+        <location name="images" path="D:/Uploads/images" />
+        <location name="audios" path="D:/Uploads/audio" />
+        <location name="document" path="D:/Uploads/document" />
+    </vdirectory>
+
+    <upload dir="D:/Uploads" key="123456" dirformat="YMD" baseurl="http://192.168.1.10:8080/res">
+        <item id="audio" dir="D:/Uploads/audio" key="123456" baseurl="http://192.168.1.10:8080/audios"/>
+        <item id="image" dir="D:/Uploads/images" key="123456" baseurl="http://192.168.1.10:8080/images" />
+        <item id="video" dir="D:/Uploads/videos" key="123456" baseurl="http://192.168.1.10:8080/videos" />
+        <item id="document" dir="D:/Uploads/document" key="123456" baseurl="http://192.168.1.10:8080/document" />
+    </upload>
+</hywebfileserver>
+

@@ -1,0 +1,265 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+<head>
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
+<meta charset="utf-8">
+<title>jQuery Upload Demo - Basic version</title>
+<meta name="description" content="File Upload widget with multiple file selection, drag&amp;drop support and progress bar for jQuery. Supports cross-domain, chunked and resumable file uploads. Works with any server-side platform (PHP, Python, Ruby on Rails, Java, Node.js, Go etc.) that supports standard HTML form file uploads.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Bootstrap styles -->
+<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+<!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
+<link rel="stylesheet" href="css/jquery.fileupload.css">
+<!-- Generic page styles -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-fixed-top .navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" >jQuery Upload</a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <h1>用jQuery Upload 实现大文件断点续传</h1>
+    <h2 class="lead">演示版</h2>
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#this">基本介绍</a></li>
+    </ul>
+    <br>
+    <blockquote>
+        <p>本演示采用jQuery Upload组件结合Hyper Upload Server来实现超大文件断点续传。<br>
+         本演示的网页可以放置在任何可用Web服务器的目录里，Hyper Upload Server支持跨域上传文件。<br>
+         Hyper Upload Server是C语言实现的高性能文件上传中间件，可以与任何应用系统无缝集成。<br>
+		 Hyper Upload Server支持1000个文件同时并发上传，支持的文件大小无限制。<br>
+		 这里演示了单文件上传的用法。
+		 </p>
+    </blockquote>
+    <br>
+    <!-- The fileinput-button span is used to style the file input field as button -->
+    <span class="btn btn-success fileinput-button">
+        <i class="glyphicon glyphicon-open"></i>
+        <span>选择文件...</span>
+        <!-- The file input field used as target for the file upload widget -->
+        <input id="fileupload" type="file" name="files[]">
+    </span>
+    <br>
+    <br>
+    <!-- The global progress bar -->
+    <div id="progress" class="progress">
+        <div class="progress-bar progress-bar-success"></div>
+    </div>
+    <!-- The container for the uploaded files -->
+    <div id="files" class="files"></div>
+    <br>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">温馨地址</h3>
+        </div>
+        <div class="panel-body">
+            <ul>
+				<li>请先安装好 <strong>Hyper Upload Server</strong> 文件上传服务器，并进行简单的设置。</li>
+				<li>最大文件上传尺寸无任何限制，无任何文件类型限制。</li>
+				<li><strong>Hyper Upload Server</strong> 支持Linux与Windows版本。</li>
+				<li><strong>Hyper Upload Server</strong>支持的文件上传组件不限于<strong>jQuery-Upload</strong> ，任何其它HTTP客户端上传组件均可。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<script src="js/jquery-3.3.1.min.js"></script>
+<!-- The jQuery UI widget factory, can be omitted if jQuery UI is already included -->
+<script src="js/vendor/jquery.ui.widget.js"></script>
+<!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
+<script src="js/jquery.iframe-transport.js"></script>
+<!-- The basic File Upload plugin -->
+<script src="js/jquery.fileupload.js"></script>
+<script src="js/jquery.md5.js"></script>
+<!-- Bootstrap JS is not required, but included for the responsive demo navigation -->
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="js/updsrvaddr.js"></script>
+
+<script>
+/*
+这里演示了用javascript调用HYFileServer的方法。
+文件上传客户端组件是开源的，您可以自己进行更新，jquery.md5.js是javascript实现的MD5代码库，来源于网上。
+
+断点续传思路：
+
+1)通过浏览器选择文件，在文件上传之前计算文件的HASH值;
+2)本文通过将 浏览器的cookie + 文件的修改时间 + 文件名 + 文件尺寸 的结果进行MD5来计算一个文件的HASH值;
+3)浏览器的cookie 是系统在浏览器访问本DEMO站点时自动给浏览器授予的;
+4)通过计算的文件HASH值向HYFileServer查询已经上传的文件尺寸，如果没有上传过，HYFileServer会返回0;
+5)如果文件已经上传的尺寸大于0，则设置jQuery-Upload 的data.uploadedBytes参数。
+
+*/
+
+//简单的Cookie帮助函数
+function setCookie(cname,cvalue,exdays)
+{
+  var d = new Date();
+  d.setTime(d.getTime()+(exdays*24*60*60*1000));
+  var expires = "expires="+d.toGMTString();
+  document.cookie = cname + "=" + cvalue + "; " + expires;
+}
+
+function getCookie(cname)
+{
+  var name = cname + "=";
+  var ca = document.cookie.split(';');
+  for(var i=0; i<ca.length; i++) 
+  {
+    var c = ca[i].trim();
+    if (c.indexOf(name)==0) return c.substring(name.length,c.length);
+  }
+  return "";
+}
+//
+//简单的文件HASH值计算，如果您不是十分考究，应该可以用于产品。
+//由于计算文件HASH值用到了多种数据，因此在HYFileServer系统范围内发生HASH冲突的可能性应该非常小，应该可以放心使用。
+//
+function getFileId (file) 
+{
+    //给浏览器授予一个唯一的ID用于区分不同的浏览器实例（不同机器或者相同机器不同厂家的浏览器）
+	var clientid = getCookie("HUAYIUPLOAD");
+	if (clientid == "") {
+		//用一个随机值来做浏览器的ID，将作为文件HASH值的一部分
+		var rand = parseInt(Math.random() * 1000);
+		var t = (new Date()).getTime();
+		clientid =rand+'T'+t;
+		
+		setCookie("HUAYIUPLOAD",clientid,365);
+	}
+	
+	var info = clientid;
+	if (file.lastModified)
+		info += file.lastModified;
+	if (file.name)
+		info += file.name;
+	if (file.size)
+		info += file.size;
+	
+	var fileid = $.md5(info);
+	return fileid;
+}
+
+$(document).ready(function () {
+    'use strict';
+	
+    // Change this to the location of your server-side upload handler:
+	var uploadserver = uploadsrv_addr;//"http://49.96.27.132:8021"
+	
+	var upload_video_url = uploadserver + '/upload/video';
+	//获取断点续传信息的地址，/resume/ 在 HYFileUploader 里是固定的，格式为 /resume/?fileid=<File Hash>
+	var resume_info_url = uploadserver+'/resume/';
+	
+	var showUploadedFile = function(file) {
+	    //file 对象的值可以用于保存到CMS里，而不仅仅是用于显示
+		var html = '<div class="file-object" >';
+			html += '<div class="info-row"><span class="rlabel">文件名：</span><span class="rvalue">'+file.name+'</span></div>';
+			html += '<div class="info-row"><span class="rlabel">保存路径：</span><span class="rvalue">'+file.path+'</span></div>';
+			html += '<div class="info-row"><span class="rlabel">文件尺寸：</span><span class="rvalue">'+file.filesize+'</span></div>';
+			html += '<div class="info-row"><span class="rlabel">访问URL：</span><span class="rvalue">'+file.url+'</span></div>';
+		html += '</div>';
+		//将文件信息显示在列表里
+		$(html).appendTo('#files');
+	}
+	
+    $('#fileupload').fileupload({
+        url: upload_video_url,
+        dataType: 'json',
+		formData: {'filecount': '1','fileid':'00000001'},
+		add: function (e, data) {
+			var that = this;
+			var fileid = getFileId(data.files[0]);
+			var t = (new Date()).getTime();
+			//获取断点续传信息
+			$.getJSON(resume_info_url, {'fileid': fileid,'st':t}, function (result) {
+				var file = result.file;
+				data.uploadedBytes = file && file.size;
+				
+				if (!result.file.finished && data.uploadedBytes < data.files[0].size) {
+					$('#progress .progress-bar').css('width', '0%');
+					//原始的options.add方法将触发上传过程
+					$.blueimp.fileupload.prototype.options.add.call(that, e, data);
+				}
+				else {
+					//文件已经上传完成了，就不要再上传了，直接返回结果就可以了
+					showUploadedFile(result.file);
+					//模拟进度完成
+					$('#progress .progress-bar').css('width', '100%');
+				}
+			});
+		},
+        done: function (e, data) {
+			//HYFileUploader返回的值将保存在data.result里
+            $.each(data.result.files, function (index, file) {
+                showUploadedFile(file);
+            });
+        },
+        progressall: function (e, data) {
+            var progress = parseInt(data.loaded / data.total * 100, 10);
+            $('#progress .progress-bar').css('width', progress + '%');
+        },
+		maxRetries: 100,
+		retryTimeout: 500,
+		fail: function (e, data) {
+			// 这里用于支持断点续传，失败重连，maxRetries为失败重连的尝试词素，retryTimeout为重连的等待超时:
+			var fu = $(this).data('blueimp-fileupload') || $(this).data('fileupload'),
+				retries = data.context.data('retries') || 0,
+				retry = function () {
+					var fileid = getFileId(data.files[0]);
+					var t = (new Date()).getTime();
+					//不管发生什么意外，我们重新获取断点续传信息
+					$.getJSON(resume_info_url, {'fileid': fileid,'st':t})
+						.done(function (result) {
+							var file = result.file;
+							data.uploadedBytes = file && file.size;
+							// clear the previous data:
+							data.data = null;
+							data.submit();
+						})
+						.fail(function () {
+							fu._trigger('fail', e, data);
+						});
+				};
+			if (data.errorThrown !== 'abort' && data.uploadedBytes < data.files[0].size && retries < fu.options.maxRetries) {
+				retries += 1;
+				data.context.data('retries', retries);
+				window.setTimeout(retry, retries * fu.options.retryTimeout);
+				return;
+			}
+			data.context.removeData('retries');
+			//$.blueimp.fileupload.prototype
+			//	.options.fail.call(this, e, data);
+			if (data.uploadedBytes == data.files[0].size) {
+				$('<p/>').text(data.files[0].name).appendTo('#files');
+			}
+		}
+    }).bind('fileuploadsubmit', function (e, data) {
+		var that = this;
+		var fileid = getFileId(data.files[0]);
+		
+		data.formData = {'fileid': fileid,'filecount': '1'};	
+		
+		if (!data.formData.fileid) {
+			return false;
+		}
+		
+	}).bind('fileuploadfail', function(e,data) {
+		data.context.removeData('retries');
+	}).bind('fileuploadadd', function (e, data) {
+        data.context = $('#files');
+    });
+});
+</script>
+
+</body>
+</html>
