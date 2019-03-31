@@ -1,6 +1,6 @@
 # Hyper Upload Server
 
-This is an super file upload server with asynchronous I/O architecture and coding by C++ language, it support over 4GB superlarge file upload and break point renew, support Windows and Linux server platform, support arbitrary format of file upload, especially suitable for large video site applications. The single server supports 1000 concurrent uploading processes, supporting mainstream browsers on PC and smart phone.
+This is an super file upload server with asynchronous I/O architecture and coding by C++ language, it support over 4GB superlarge file upload  in Chromimu kernel browser and  less than 2GB in IE 11 browser or higher version. support break point renew, support Windows and Linux server platform, support arbitrary format of file upload, especially suitable for large video site applications. The single server supports 1000 concurrent uploading processes, supporting mainstream browsers on PC and smart phone.
 
 
 ## Features
@@ -64,7 +64,7 @@ Please check the manual in the ./doc catalog.
 
 # Hyper Upload Server 超级上传服务器
 
-这是一款超级文件上传服务器，采用异步I/O架构，采用C++语言编码实现。它支持4GB以上超大文件上传和断点续传，支持Windows和Linux服务器平台，支持任意格式的文件上传，尤其适合大的视频网站应用。单台服务器支持1000并发上传进程，支持PC端和智能手机端主流的浏览器。
+这是一款超级文件上传服务器，采用异步I/O架构，采用C++语言编码实现。它支持Chromium 内核浏览器4GB以上超大文件上传和断点续传，支持IE 11以上版本的浏览器中2GB的文件上传和断点续传，支持Windows和Linux服务器平台，支持任意格式的文件上传，尤其适合大的视频网站应用。单台服务器支持1000并发上传进程，支持PC端和智能手机端主流的浏览器。
 
 ## 主要特性
 1. 服务器端采用异步I/O架设设计，具有高性能I/O处理能力，尤其适用于超大文件上传；
@@ -75,7 +75,8 @@ Please check the manual in the ./doc catalog.
 5. 服务器端采用无缓冲即时写入方式，上传数据写入一步到位。不同于PHP、JAVA等技术实现方式需要两步写入；
 6. 服务器端可跨平台编译运行，支持Windows和Linux平台；
 7. 高性能，单台服务器支持1000个并发上传进程；
-8. 支持4GB以上超大文件上传，文件大小不受限制；
+8. 支持Chromium内核浏览器中4GB以上超大文件上传，文件大小不受限制；
+9. 支持IE 11版本及以上的浏览器最大2GB的文件上传；
 9. 客户端支持采用HTTP标准协议上传；
 10.支持断点续传，断网、关机重启均不受影响；
 11.支持HTML5浏览器上传进度实时显示；
