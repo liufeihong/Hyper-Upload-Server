@@ -120,6 +120,7 @@ Please check the manual in the ./doc catalog.
 ## 联络
 - QQ:1918098288
 - Mail: 1918098288@qq.com
+- QQ群: 699490862
 
 
 
